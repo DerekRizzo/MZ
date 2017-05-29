@@ -197,6 +197,30 @@ check4:=[{"Страна":"Узбекистан", "Столица": "Ташкен
 ,{"Страна":"Науру", "Столица": "официальной столицы не имеет"}
 ,{"Страна":"Непал", "Столица": "Катманду"}
 ,{"Страна":"Япония", "Столица": "Токио"}]
+check(name) 
+{ 
+for k, v in check1 
+{ 
+if name contains % v["Страна"] 
+return v["Столица"] 
+} 
+for k, v in check2 
+{ 
+if name contains % v["Страна"] 
+return v["Столица"] 
+} 
+for k, v in check3 
+{ 
+if name contains % v["Страна"] 
+return v["Столица"] 
+} 
+for k, v in check4 
+{ 
+if name contains % v["Страна"] 
+return v["Столица"] 
+} 
+return "Не найдено" 
+}
 Timmer: 
 FileRead, Chatlog, %A_MyDocuments%\GTA San Andreas User Files\SAMP\chatlog.txt 
 if (RegExMatch(Chatlog, "\]\s+\[Радио (ЛС|СФ|ЛВ)\] ([_A-z]+): (.*)", out)) { 
