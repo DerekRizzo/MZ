@@ -203,11 +203,15 @@ if (RegExMatch(Chatlog, "\]\s+\[Радио (ЛС|СФ|ЛВ)\] ([_A-z]+): (.*)", 
 save(chatlog) 
 check:=check(out3) 
 if (check!="Не найдено") 
-sendchat("/sms 1003 " check)
-Sleep, 500
-sendchat("/sms 1002 " check)
-Sleep, 500
-sendchat("/sms 1001 " check)
+	if (out1=="ЛС"){
+	sendchat("/sms 1001 " check)
+	}
+	if (out1=="СФ"){
+	sendchat("/sms 1002 " check)
+	}
+	if (out1=="ЛВ"){
+	sendchat("/sms 1003 " check)
+	}
 } 
 return
 check(name) 
