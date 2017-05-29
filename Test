@@ -197,6 +197,19 @@ check4:=[{"Страна":"Узбекистан", "Столица": "Ташкен
 ,{"Страна":"Науру", "Столица": "официальной столицы не имеет"}
 ,{"Страна":"Непал", "Столица": "Катманду"}
 ,{"Страна":"Япония", "Столица": "Токио"}]
+Timmer: 
+FileRead, Chatlog, %A_MyDocuments%\GTA San Andreas User Files\SAMP\chatlog.txt 
+if (RegExMatch(Chatlog, "\]\s+\[Радио (ЛС|СФ|ЛВ)\] ([_A-z]+): (.*)", out)) { 
+save(chatlog) 
+check:=check(out3) 
+if (check!="Не найдено") 
+sendchat("/sms 1003 " check)
+Sleep, 500
+sendchat("/sms 1002 " check)
+Sleep, 500
+sendchat("/sms 1001 " check)
+} 
+return
 check(name) 
 { 
 for k, v in check1 
@@ -221,12 +234,3 @@ return v["Столица"]
 } 
 return "Не найдено" 
 }
-Timmer: 
-FileRead, Chatlog, %A_MyDocuments%\GTA San Andreas User Files\SAMP\chatlog.txt 
-if (RegExMatch(Chatlog, "\]\s+\[Радио (ЛС|СФ|ЛВ)\] ([_A-z]+): (.*)", out)) { 
-save(chatlog) 
-check:=check(out3) 
-if (check!="Не найдено") 
-sendchat("/sms номер " check) 
-} 
-return
