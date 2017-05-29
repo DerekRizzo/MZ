@@ -204,13 +204,13 @@ save(chatlog)
 check:=check(out3) 
 if (check!="Не найдено") 
 	if (out1=="ЛС"){
-	sendchat("/sms 1001 " check)
+		sendchat("/sms 1001 " check)
 	}
 	if (out1=="СФ"){
-	sendchat("/sms 1002 " check)
+		sendchat("/sms 1002 " check)
 	}
 	if (out1=="ЛВ"){
-	sendchat("/sms 1003 " check)
+		sendchat("/sms 1003 " check)
 	}
 } 
 return
@@ -218,23 +218,23 @@ check(name)
 { 
 for k, v in check1 
 { 
-if name contains % v["Страна"] 
-return v["Столица"] 
+	if name contains % v["Страна"] 
+	return v["Столица"] 
 } 
 for k, v in check2 
 { 
-if name contains % v["Страна"] 
-return v["Столица"] 
+	if name contains % v["Страна"] 
+	return v["Столица"] 
 } 
 for k, v in check3 
 { 
-if name contains % v["Страна"] 
-return v["Столица"] 
+	if name contains % v["Страна"] 
+	return v["Столица"] 
 } 
 for k, v in check4 
 { 
-if name contains % v["Страна"] 
-return v["Столица"] 
+	if name contains % v["Страна"] 
+	return v["Столица"] 
 } 
 return "Не найдено" 
 }
