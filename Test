@@ -1,127 +1,57 @@
-#Include SAMP.ahk
-#IfWinActive GTA:SA:MP
-#SingleInstance, Force
-#Persistent
-#MaxThreads 100
-#NoEnv
-Menu,Tray,NoStandard 
-Menu,Tray,DeleteAll
-Menu,Tray,color,FFFFFF
-Menu,Tray,Add,Перезапуск, reloadd
-Menu,Tray,Add,
-Menu,Tray,add,Выход,GuiClose
-start:
-VERSION := 3.0
-DIR = %A_MyDocuments%\GTA San Andreas User Files\MZ Helper\
-DIRSETTING = %A_MyDocuments%\GTA San Andreas User Files\MZ Helper\setting.ini
-DIRPRAVILA = %A_MyDocuments%\GTA San Andreas User Files\MZ Helper\rules\
-DIRCENA = %A_MyDocuments%\GTA San Andreas User Files\MZ Helper\rules\cena.ini
-DIRBL = %A_MyDocuments%\GTA San Andreas User Files\MZ Helper\rules\blacklist.txt
-FileCreateDir, %DIRPRAVILA%
-FileCreateDir, %DIR%
-URLDownloadToFile, http://ahkerik.esy.es/cena.ini, %DIRPRAVILA%cena.ini
-URLDownloadToFile, http://ahkerik.esy.es/info.txt, %DIRPRAVILA%info.txt
-URLDownloadToFile, http://ahkerik.esy.es/blacklist.txt, %DIRPRAVILA%blacklist.txt
-Color1 := "{FF6666}"
-Color2 := "{FFFFFF}"
-Color3 := "{FFEB3B}"
-SetTimer, timeget
-IniRead, name, %DIRSETTING%,HERO,name
-IniRead, org, %DIRSETTING%,HERO,org
-IniRead, rangname, %DIRSETTING%,HERO,rangname
-IniRead, phone, %DIRSETTING%,HERO,phone
-IniRead, podr, %DIRSETTING%,HERO,podr
-IniRead, sex, %DIRSETTING%,HERO,sex
-IniRead, rang, %DIRSETTING%,HERO,rang
-IniRead, cena1, %DIRCENA%,CP,cena1
-IniRead, cena2, %DIRCENA%,CP,cena2
-IniRead, cena3, %DIRCENA%,CP,cena3
-IniRead, cena4, %DIRCENA%,CP,cena4
-IniRead, cena5, %DIRCENA%,CP,cena5
-IniRead, cena6, %DIRCENA%,CP,cena6
-IniRead, cena7, %DIRCENA%,CP,cena7
-IniRead, cena8, %DIRCENA%,CP,cena8
-IniRead, cena9, %DIRCENA%,CP,cena9
-IniRead, cena10, %DIRCENA%,CP,cena10
-IniRead, cena11, %DIRCENA%,CP,cena11
-IniRead, cena12, %DIRCENA%,CP,cena12
-IniRead, cena13, %DIRCENA%,CP,cena13
-IniRead, cena14, %DIRCENA%,CP,cena14
-IniRead, cena15, %DIRCENA%,CP,cena15
-IniRead, new, %DIRCENA%,CP,new
-if (podr="Городская больница ЛС") {
-	teg:="LS"
-}
-else if (podr="Городская больница СФ") {
-	teg:="SF"
-}
-else if (podr="Городская больница ЛВ") {
-	teg:="LV"
-}
-if (sex="Мужской") {
-	osmotrel:="осмотрел"
-	postavil:="поставил"
-	dostal:="достал"
-	peredal:="передал"
-	vzal:="взял"
-	psmotrel:="посмотрел"
-	otdal:="отдал"
-	provel:="провел"
-	zakatil:="закатил"
-	vzglanul:="взглянул"
-	zabral:="забрал"
-	nadel:="надел"
-	nazal:="нажал"
-	sdelal:="сделал"
-	vitanul:="вытянул"
-	ubral:="убрал"
-	pokazal:="показал"
-	sunul:="сунул"
-	zashel:="зашел"
-
-}else{
-	osmotrel:="осмотрела"
-	postavil:="поставила"
-	dostal:="достала"
-	peredal:="передала"
-	vzal:="взяла"
-	psmotrel:="посмотрела"
-	otdal:="отдала"
-	provel:="провела"
-	zakatil:="закатила"
-	vzglanul:="взглянула"
-	zabral:="забрала"
-	nadel:="надела"
-	nazal:="нажала"
-	sdelal:="сделала"
-	vitanul:="вытянула"
-	ubral:="убрала"
-	sunul:="сунула"
-	pokazal:="показала"
-	zashel:="зашла"
-}
-if (org=="Министерство здравоохранения") {
-	WinWaitActive, GTA:SA:MP, ,
-	{
-		sleep, 2000
-		RegExMatch(name, "(.*)_(.*)", result)
-		addChatMessageEx(Color1, "" Color1 "[MZ Helper]:" Color2 " Привет, {3399FF}" result1 " " result2 "" Color2 "! Информация о скрипте /mzinfo ")
-		addChatMessageEx(Color1, "" Color1 "[MZ Helper]:" Color2 " Скрипт MZ Helper v" VERSION " загружен. Автор: {3399FF}Erik_Forest" Color2 ".")
-		if (new==1){
-			addChatMessageEx(Color1, "" Color1 "[MZ Helper]:" Color3 " Появилась новая версия " Color1 "MZ Helper" Color3 ", вы можите ознакомится сней на форуме.")
-		}else{
+#include SAMP.ahk
+~Enter::
+if(CommandProcessor.StatusProcessor) {
+	if(IsChatActive()) {
+		if(isDialogOpen())
+			return
+		
+		blockChatInput()
+		while(IsChatActive())
+			continue
+		
+		unBlockChatInput()
+		
+		TextChat := GetChatText()
+		
+		if(SubStr(TextChat, 1, 1) = "/") { ; Определено что введена команда
+			InputCMD := StrSplit(TextChat, A_Space)
+			InputCMD := InputCMD[1]
+			CommandProcessor.TempCmd := InputCMD
+			CommandProcessor.TempText := TextChat
 			
+			if(CommandProcessor.CommandArray.HasKey(InputCMD)) { ; Если команда определена в скрипте
+				ClearTextDialog()
+				SetTimer, % CommandProcessor.CommandArray[InputCMD], -1
+			} else { ; Если команда не определена
+				SendChat(TextChat)
+				ClearTextDialog()
+			}
+		} else { ; Определено что вводиться обычный текст
+			if(TextChat != "") {
+				CommandProcessor.TempText := TextChat
+				SendChat(TextChat)
+				ClearTextDialog()
+			}
 		}
 	}
-}else{
-	WinWaitActive, GTA:SA:MP, ,
-	{
-		sleep, 2000
-		addChatMessageEx(Color1, "" Color1 "[MZ Helper]:" Color2 " Скрипт MZ Helper загружен. Автор: {3399FF}Erik_Forest" Color2 ". Версия " VERSION "")
-		addChatMessageEx(Color1, "" Color1 "[MZ Helper]:" Color2 " Введите " Color1 "/mzreg " Color2 "для регистрации в скрипте. Информация о скрипте " Color1 "/mzinfo")
-	}
 }
-~ESC::
-~F6::
-menu:=0
-Return
+return
+CommandProcessor := new CommandProcessor() 
+CommandProcessor.SetStatusProcessor(true) 
+CommandProcessor.RegisterCommand("/увал", "metka") 
+metka:
+chatInput:=CommandProcessor.TempText
+	if (RegExMatch(chatInput,"/увал")){
+		RegExMatch(chatInput,"/увал (.*) (.*)",out)
+		color := getPlayerColor(id)
+		if (color=="4284901119"){
+			nick := getPlayerNameById(out1)
+			SendChat("/n Игрок " nick " был уволен. Причина: ' " out2 " '")
+		}else{
+			addChatMessageEx("{FFFFFF}", "{FFFFFF}Вы не можите уволить сотурдника не состоящиго в '{FF6666}Министерстве Здравоохранение{FF6600}'")
+		}
+	}
+	else if (RegExMatch(chatInput,"^/инв")){
+		
+	}
+return 
