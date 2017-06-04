@@ -1,4 +1,7 @@
 #include SAMP.ahk
+CommandProcessor := new CommandProcessor() 
+CommandProcessor.SetStatusProcessor(true) 
+CommandProcessor.RegisterCommand("/увал", "metka") 
 ~Enter::
 if(CommandProcessor.StatusProcessor) {
 	if(IsChatActive()) {
@@ -36,22 +39,24 @@ if(CommandProcessor.StatusProcessor) {
 	}
 }
 return
-CommandProcessor := new CommandProcessor() 
-CommandProcessor.SetStatusProcessor(true) 
-CommandProcessor.RegisterCommand("/увал", "metka") 
 metka:
 chatInput:=CommandProcessor.TempText
-	if (RegExMatch(chatInput,"/увал")){
+	if (RegExMatch(chatInput,"^/увал"))
+	{
 		RegExMatch(chatInput,"/увал (.*) (.*)",out)
 		color := getPlayerColor(id)
-		if (color=="4284901119"){
+		if (color=="4284901119")
+		{
 			nick := getPlayerNameById(out1)
 			SendChat("/n Игрок " nick " был уволен. Причина: ' " out2 " '")
-		}else{
+		}
+		else
+		{
 			addChatMessageEx("{FFFFFF}", "{FFFFFF}Вы не можите уволить сотурдника не состоящиго в '{FF6666}Министерстве Здравоохранение{FF6600}'")
 		}
 	}
-	else if (RegExMatch(chatInput,"^/инв")){
+	else if (RegExMatch(chatInput,"^/инв"))
+	{
 		
 	}
 return 
