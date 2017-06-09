@@ -1,90 +1,124 @@
-; <COMPILER: v1.1.22.09>
-#NoEnv
 #Persistent
-#SingleInstance, force
-SetBatchLines -1
-VersionBot:= "1.2"
-url_script := "https://drive.google.com/open?id=0BwfYrU5QBG26YTg5Ykl6U2xGeFU"
-url_version := "http://ahkbase.cm-host.ru/readfile.php?id=94"
-script_version := VersionBot
-last_version := GetLastVersionSoft(url_version)
-if (script_version < last_version)
+#SingleInstance FORCE
+#Include SAMP.ahk
+CommandProcessor := new CommandProcessor()
+CommandProcessor.SetStatusProcessor(true)
+CommandProcessor.RegisterCommand("/an", "mycomand")
+~LButton::
+if (A_PriorHotkey <> "~LButton" or A_TimeSincePriorHotkey > 500)
 {
-MsgBox, 4 ,Новая версия, Обнаружена новая версия программы! %last_version%`nНажмите "Yes" для перехода к скачиванию.
-IfMsgBox Yes
-{
-Run, %url_script%
-ExitApp
+	KeyWait, LButton
+	return
 }
+if (menu==1){
+	menu:=0
+	SendChat("/sms " telefon " " GetDialogLine(getDialogLineNumber()))
+	return
 }
-GetLastVersionSoft(URL) {
-URLDownloadToFile, %URL%, %A_Temp%/79124
-FileRead, LastVersion, %A_Temp%/79124
-FileDelete, %A_Temp%/79124
-return LastVersion
+~Enter::
+if (menu==1){
+	menu:=0
+	SendChat("/sms " telefon " " GetDialogLine(getDialogLineNumber()))
+	return
 }
-Gui, Add, Button, x80 y80 w80 h43 gGO Default, Проверить
-Gui, Add, Button, x200 y80 w80 h43 gAbout, Об авторе
-Gui, Add, Edit, x10 y10 w360 vEditIn, вреитьрпо
-Gui, Add, Edit, x10 y40 w360  vGotov HwndhLog -Wrap ReadOnly,
-Gui, Show, w377 h150, Анаграммы %VersionBot%
-ComObjError(false)
-ie := ComObjCreate("InternetExplorer.Application")
-ie.Visible := false
+if(CommandProcessor.StatusProcessor) {
+	if(IsChatActive()) {
+		if(isDialogOpen())
+			return
+		
+		blockChatInput()
+		while(IsChatActive())
+			continue
+		
+		unBlockChatInput()
+		
+		TextChat := GetChatText()
+		
+		if(SubStr(TextChat, 1, 1) = "/") { ; Определено что введена команда
+			InputCMD := StrSplit(TextChat, A_Space)
+			InputCMD := InputCMD[1]
+			CommandProcessor.TempCmd := InputCMD
+			CommandProcessor.TempText := TextChat
+			
+			if(CommandProcessor.CommandArray.HasKey(InputCMD)) { ; Если команда определена в скрипте
+				ClearTextDialog()
+				SetTimer, % CommandProcessor.CommandArray[InputCMD], -1
+			} else { ; Если команда не определена
+				SendChat(TextChat)
+				ClearTextDialog()
+			}
+		} else { ; Определено что вводиться обычный текст
+			if(TextChat != "") {
+				CommandProcessor.TempText := TextChat
+				SendChat(TextChat)
+				ClearTextDialog()
+			}
+		}
+	}
+}
+
 return
-About:
-Gui, 2:Add, Text,,Другие полезные скрипты для Diamond RP:
-UrlAHKLinks  := "https://drive.google.com/uc?id=0BwfYrU5QBG26UGRpSVllRHh3U1U&export=download"
-URLDownloadToFile, %UrlAHKLinks%, %A_Temp%/UrlAHKLinks
-Loop, read, %A_Temp%/UrlAHKLinks
+
+mycomand:
 {
-if A_LoopReadLine
-Gui, 2:Add, Link,,%A_LoopReadLine%
-}
-Gui, 2:Add, Text,,Версия %script_version%
-Gui, 2:Add, Text,,        By Godarck
-Gui, 2:Show
-return
-GuiClose:
-ie.Quit()
-ExitApp
-GO:
-Gui, Submit, NoHide
-addr:=% EditIn
-if RegExMatch(addr,"i)[a-z]")
-{
-MsgBox, 48, , Используйте только русские буквы
-addr := RegExReplace(addr,"i)[a-z]","")
-}
-if RegExMatch(addr,"\d")
-{
-MsgBox, 48, , Используйте только русские буквы без цифр
-addr := RegExReplace(addr,"\d","")
-}
-addr := RegExReplace(addr,"[\(\\\.\*\?\+\[\{\|\(\)\^\$\)]","")
-StringReplace, addr , addr ,>,, All
-StringReplace, addr , addr ,<,, All
-StringReplace, addr , addr ,=,, All
-StringReplace, addr , addr ,#,, All
-if addr
-{
-Random, Rand, NewSeed
-ie.Navigate("http://live.mephist.ru/anagram_find.php?nc=" rand "&params=" addr )
-While ie.readyState != 4 || ie.document.readyState != "complete" || ie.busy
-continue
-text := ie.document.body.innerText
-maxmatch := 0
-Loop, parse, text, `n, `r
-{
-If RegExMatch(A_LoopField,"i)(.*) \((\d+)\)", match )
-{
-if (match2 > MaxMatch)
-{
-MaxMatch := % match2
-MaxWord := % match1
-}
-}
-}
-GuiControl,, Gotov, %MaxWord%
+	chatInput:=CommandProcessor.TempText
+	if (RegExMatch(chatInput,"^/an"))
+	{
+		if (RegExMatch(chatInput,"/an ([0-9]{1,8}) ([А-я]+)", out))
+		{
+			telefon:="" out1 ""
+			anagrama:="" out2 ""
+			site:=get("http://live.mephist.ru/anagram_find.php?nc=2&params=" anagrama)
+			Error:="<div class=Err>Для сочетания &laquo;<strong>" anagrama "</strong>&raquo; ни одной анаграммы не найдено</div>"
+			if (site=Error)
+			{
+				addChatMessageEx("00FF00", "Для сочетания {f44336}'" anagrama "'{00FF00} ни одной анаграммы не найдено")
+			}
+			else
+			{
+				v:=1
+				loop, Parse, site, `n,
+				{
+					if (RegExMatch(A_LoopField, "\>([А-я]+)</a>", out))
+					{
+						anag%v%:="" out1 ""
+						v++
+					}
+					else if (RegExMatch(A_LoopField, "\>([А-я]+)</a>", out))
+					{
+						anag%v%:="" out1 ""
+						v++
+					}
+					else if (RegExMatch(A_LoopField, "\>([А-я]+)</a>", out))
+					{
+						anag%v%:="" out1 ""
+						v++
+					}
+					else if (RegExMatch(A_LoopField, "\>([А-я]+)</a>", out))
+					{
+						anag%v%:="" out1 ""
+						v++
+					}
+					else if (RegExMatch(A_LoopField, "\>([А-я]+)</a>", out))
+					{
+						anag%v%:="" out1 ""
+						v++
+					}
+				}
+				Sleep, 50
+				anagr:=[,"" anag1 ""
+				,"" anag2 ""
+				,"" anag3 ""
+				,"" anag4 ""
+				,"" anag5 ""]
+				menu:=1
+				showDialog(2, "Выберете 1 из вариантов ответов", gettext(anagr), "Закрыть")
+			}
+		}
+		else
+		{
+			addChatMessageEx("00FF00", "Ай не хуя, используй {f44336}/an {00FF00}[ {f44336}номер радиостудии{00FF00} ] [ {f44336}сама анаграмма. пример: укарч {00FF00}]")
+		}
+	}
 }
 return
