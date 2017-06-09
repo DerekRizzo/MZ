@@ -1,62 +1,90 @@
-#include SAMP.ahk
-CommandProcessor := new CommandProcessor() 
-CommandProcessor.SetStatusProcessor(true) 
-CommandProcessor.RegisterCommand("/увал", "metka") 
-~Enter::
-if(CommandProcessor.StatusProcessor) {
-	if(IsChatActive()) {
-		if(isDialogOpen())
-			return
-		
-		blockChatInput()
-		while(IsChatActive())
-			continue
-		
-		unBlockChatInput()
-		
-		TextChat := GetChatText()
-		
-		if(SubStr(TextChat, 1, 1) = "/") { ; Определено что введена команда
-			InputCMD := StrSplit(TextChat, A_Space)
-			InputCMD := InputCMD[1]
-			CommandProcessor.TempCmd := InputCMD
-			CommandProcessor.TempText := TextChat
-			
-			if(CommandProcessor.CommandArray.HasKey(InputCMD)) { ; Если команда определена в скрипте
-				ClearTextDialog()
-				SetTimer, % CommandProcessor.CommandArray[InputCMD], -1
-			} else { ; Если команда не определена
-				SendChat(TextChat)
-				ClearTextDialog()
-			}
-		} else { ; Определено что вводиться обычный текст
-			if(TextChat != "") {
-				CommandProcessor.TempText := TextChat
-				SendChat(TextChat)
-				ClearTextDialog()
-			}
-		}
-	}
+; <COMPILER: v1.1.22.09>
+#NoEnv
+#Persistent
+#SingleInstance, force
+SetBatchLines -1
+VersionBot:= "1.2"
+url_script := "https://drive.google.com/open?id=0BwfYrU5QBG26YTg5Ykl6U2xGeFU"
+url_version := "http://ahkbase.cm-host.ru/readfile.php?id=94"
+script_version := VersionBot
+last_version := GetLastVersionSoft(url_version)
+if (script_version < last_version)
+{
+MsgBox, 4 ,Новая версия, Обнаружена новая версия программы! %last_version%`nНажмите "Yes" для перехода к скачиванию.
+IfMsgBox Yes
+{
+Run, %url_script%
+ExitApp
+}
+}
+GetLastVersionSoft(URL) {
+URLDownloadToFile, %URL%, %A_Temp%/79124
+FileRead, LastVersion, %A_Temp%/79124
+FileDelete, %A_Temp%/79124
+return LastVersion
+}
+Gui, Add, Button, x80 y80 w80 h43 gGO Default, Проверить
+Gui, Add, Button, x200 y80 w80 h43 gAbout, Об авторе
+Gui, Add, Edit, x10 y10 w360 vEditIn, вреитьрпо
+Gui, Add, Edit, x10 y40 w360  vGotov HwndhLog -Wrap ReadOnly,
+Gui, Show, w377 h150, Анаграммы %VersionBot%
+ComObjError(false)
+ie := ComObjCreate("InternetExplorer.Application")
+ie.Visible := false
+return
+About:
+Gui, 2:Add, Text,,Другие полезные скрипты для Diamond RP:
+UrlAHKLinks  := "https://drive.google.com/uc?id=0BwfYrU5QBG26UGRpSVllRHh3U1U&export=download"
+URLDownloadToFile, %UrlAHKLinks%, %A_Temp%/UrlAHKLinks
+Loop, read, %A_Temp%/UrlAHKLinks
+{
+if A_LoopReadLine
+Gui, 2:Add, Link,,%A_LoopReadLine%
+}
+Gui, 2:Add, Text,,Версия %script_version%
+Gui, 2:Add, Text,,        By Godarck
+Gui, 2:Show
+return
+GuiClose:
+ie.Quit()
+ExitApp
+GO:
+Gui, Submit, NoHide
+addr:=% EditIn
+if RegExMatch(addr,"i)[a-z]")
+{
+MsgBox, 48, , Используйте только русские буквы
+addr := RegExReplace(addr,"i)[a-z]","")
+}
+if RegExMatch(addr,"\d")
+{
+MsgBox, 48, , Используйте только русские буквы без цифр
+addr := RegExReplace(addr,"\d","")
+}
+addr := RegExReplace(addr,"[\(\\\.\*\?\+\[\{\|\(\)\^\$\)]","")
+StringReplace, addr , addr ,>,, All
+StringReplace, addr , addr ,<,, All
+StringReplace, addr , addr ,=,, All
+StringReplace, addr , addr ,#,, All
+if addr
+{
+Random, Rand, NewSeed
+ie.Navigate("http://live.mephist.ru/anagram_find.php?nc=" rand "&params=" addr )
+While ie.readyState != 4 || ie.document.readyState != "complete" || ie.busy
+continue
+text := ie.document.body.innerText
+maxmatch := 0
+Loop, parse, text, `n, `r
+{
+If RegExMatch(A_LoopField,"i)(.*) \((\d+)\)", match )
+{
+if (match2 > MaxMatch)
+{
+MaxMatch := % match2
+MaxWord := % match1
+}
+}
+}
+GuiControl,, Gotov, %MaxWord%
 }
 return
-metka:
-chatInput:=CommandProcessor.TempText
-	if (RegExMatch(chatInput,"^/увал"))
-	{
-		RegExMatch(chatInput,"/увал (.*) (.*)",out)
-		color := getPlayerColor(id)
-		if (color=="4284901119")
-		{
-			nick := getPlayerNameById(out1)
-			SendChat("/n Игрок " nick " был уволен. Причина: ' " out2 " '")
-		}
-		else
-		{
-			addChatMessageEx("{FFFFFF}", "{FFFFFF}Вы не можите уволить сотурдника не состоящиго в '{FF6666}Министерстве Здравоохранение{FF6600}'")
-		}
-	}
-	else if (RegExMatch(chatInput,"^/инв"))
-	{
-		
-	}
-return 
