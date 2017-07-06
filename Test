@@ -1,124 +1,229 @@
-#Persistent
-#SingleInstance FORCE
-#Include SAMP.ahk
-CommandProcessor := new CommandProcessor()
-CommandProcessor.SetStatusProcessor(true)
-CommandProcessor.RegisterCommand("/an", "mycomand")
-~LButton::
-if (A_PriorHotkey <> "~LButton" or A_TimeSincePriorHotkey > 500)
+<?php
+require "include/bd.php";
+$filename = 'include/version.html';
+$handle = fopen($filename, "rb");
+$contents = fread($handle, filesize($filename));
+fclose($handle);
+$data = $_POST;
+$sender = $_POST;
+if( isset($sender['do_send']))
 {
-	KeyWait, LButton
-	return
-}
-if (menu==1){
-	menu:=0
-	SendChat("/sms " telefon " " GetDialogLine(getDialogLineNumber()))
-	return
-}
-~Enter::
-if (menu==1){
-	menu:=0
-	SendChat("/sms " telefon " " GetDialogLine(getDialogLineNumber()))
-	return
-}
-if(CommandProcessor.StatusProcessor) {
-	if(IsChatActive()) {
-		if(isDialogOpen())
-			return
-		
-		blockChatInput()
-		while(IsChatActive())
-			continue
-		
-		unBlockChatInput()
-		
-		TextChat := GetChatText()
-		
-		if(SubStr(TextChat, 1, 1) = "/") { ; Определено что введена команда
-			InputCMD := StrSplit(TextChat, A_Space)
-			InputCMD := InputCMD[1]
-			CommandProcessor.TempCmd := InputCMD
-			CommandProcessor.TempText := TextChat
-			
-			if(CommandProcessor.CommandArray.HasKey(InputCMD)) { ; Если команда определена в скрипте
-				ClearTextDialog()
-				SetTimer, % CommandProcessor.CommandArray[InputCMD], -1
-			} else { ; Если команда не определена
-				SendChat(TextChat)
-				ClearTextDialog()
-			}
-		} else { ; Определено что вводиться обычный текст
-			if(TextChat != "") {
-				CommandProcessor.TempText := TextChat
-				SendChat(TextChat)
-				ClearTextDialog()
-			}
-		}
-	}
-}
+    $name = $sender['username'];
+    $link = $sender['link'];
+    $message = $sender['text'];
+    $ip = $_SERVER["REMOTE_ADDR"];
+    $callback = R::dispense('callback');
+    $callback->name = $name;
+    $callback->link = $link;
+    $callback->message = $message;
+    $callback->ip = $_SERVER["REMOTE_ADDR"];
+    date_default_timezone_set('Europe/Kiev');
+    $callback->date = date("d.m.y");
+    $callback->time = date("H:i");
+    R::store($callback);
+    $msg="
+    ===========================
+    Ник: $name
+    ----------------------------------------------------
+    Ссылка на VK: $link
+    ----------------------------------------------------
+    IP: $ip
+    ----------------------------------------------------
+    Сообщение: $message
+    ===========================
+    "; 
+    file('https://api.vk.com/method/messages.send?user_id=180698941&message=' .urlencode($msg). '&access_token=');
 
-return
-
-mycomand:
+}
+if( isset($data['do_login']))
 {
-	chatInput:=CommandProcessor.TempText
-	if (RegExMatch(chatInput,"^/an"))
-	{
-		if (RegExMatch(chatInput,"/an ([0-9]{1,8}) ([А-я]+)", out))
-		{
-			telefon:="" out1 ""
-			anagrama:="" out2 ""
-			site:=get("http://live.mephist.ru/anagram_find.php?nc=2&params=" anagrama)
-			Error:="<div class=Err>Для сочетания &laquo;<strong>" anagrama "</strong>&raquo; ни одной анаграммы не найдено</div>"
-			if (site=Error)
-			{
-				addChatMessageEx("00FF00", "Для сочетания {f44336}'" anagrama "'{00FF00} ни одной анаграммы не найдено")
-			}
-			else
-			{
-				v:=1
-				loop, Parse, site, `n,
-				{
-					if (RegExMatch(A_LoopField, "\>([А-я]+)</a>", out))
-					{
-						anag%v%:="" out1 ""
-						v++
-					}
-					else if (RegExMatch(A_LoopField, "\>([А-я]+)</a>", out))
-					{
-						anag%v%:="" out1 ""
-						v++
-					}
-					else if (RegExMatch(A_LoopField, "\>([А-я]+)</a>", out))
-					{
-						anag%v%:="" out1 ""
-						v++
-					}
-					else if (RegExMatch(A_LoopField, "\>([А-я]+)</a>", out))
-					{
-						anag%v%:="" out1 ""
-						v++
-					}
-					else if (RegExMatch(A_LoopField, "\>([А-я]+)</a>", out))
-					{
-						anag%v%:="" out1 ""
-						v++
-					}
-				}
-				Sleep, 50
-				anagr:=[,"" anag1 ""
-				,"" anag2 ""
-				,"" anag3 ""
-				,"" anag4 ""
-				,"" anag5 ""]
-				menu:=1
-				showDialog(2, "Выберете 1 из вариантов ответов", gettext(anagr), "Закрыть")
-			}
-		}
-		else
-		{
-			addChatMessageEx("00FF00", "Ай не хуя, используй {f44336}/an {00FF00}[ {f44336}номер радиостудии{00FF00} ] [ {f44336}сама анаграмма. пример: укарч {00FF00}]")
-		}
-	}
+    $errors = array();
+    $user = R::findOne('user', 'nick = ?', array($data['nick']));
+    if($user)
+    {
+        if( password_verify($data['password'], $user->password))
+        {
+            $_SESSION['logged_user'] = $user;
+        }
+        else
+        {
+            $errors[] = 'Неверно вверёд пароль!';
+        }
+    }
+    else
+    {
+        $errors[] = 'Пользователь с таким ником не найден!';
+    }
+ if( ! empty($errors) )
+ {
+     $error = array_shift($errors);
+ }
 }
-return
+?>
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>AP Helper By Erik</title>
+		<meta http-equiv=’Content-Type’ content=’text/html; charset=utf-8′ /> 
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+		<link rel="stylesheet" type="text/css" href="css/global.css">
+		<link href="https://fonts.googleapis.com/css?family=Alfa+Slab+One" rel="stylesheet">
+
+	</head>
+	<body>
+            <?php
+           
+            ?>
+		<header>
+			<div id="logo"><span class="text1">AP Helper</span> <span class="text2">by Erik</span></div> 
+			<div id="menu">
+				<ul>
+					<a href="#win1"><li class="glmenu">Главная</li></a>
+					<a href="#win2"><li class="glmenu">Скачать</li></a>
+					<a href="#win3"><li class="glmenu">Команды</li></a>
+					<a href="#win4"><li class="glmenu">Обновления</li></a>
+					<a href="#win5"><li class="glmenu">Личный Кабинет</li></a>
+					<a href="#win6"><li class="glmenu">Тех.Поддержка</li></a>
+				</ul>
+			</div>
+			<div id="offmenu">
+				<a>MENU</a>
+					<div class="dropdown">
+						<a href="#win1" class="offmenu1">Главная<br /></a>
+						<a href="#win2" class="offmenu1">Скачать<br /></a>
+						<a href="#win3" class="offmenu1">Команды<br /></a>
+						<a href="#win4" class="offmenu1">Обновления<br /></a>
+						<a href="#win5" class="offmenu1">Личный Кабинет<br /></a>
+						<a href="#win6" class="offmenu1">Тех.Поддержка<br /></a>
+					</div>
+			</div>
+		</header>
+								<a href="#x" class="overlay" id="win1"></a>
+			<div class="popup" style="text-align:center;">
+				<h1>AP Helper</h1>
+				<span>ДоБрый день! Я создатель AP Helper и хочу немного рассказать о нём, первое что хочу сказать данный скрипт создан исключительно для сервера <span style="color: green">Advance RP Green</span>. Именно данный скрипт облехчит вам игру, Вам не прийдётся искать/делать ведь всё что надо уже есть в AP Helper.<br/> P.S. Данная версия находися в бэтта тесте</span>
+			</div>
+			</div>	
+					<a href="#x" class="overlay" id="win2"></a>
+			<div class="popup" style="text-align:center;">
+				<a href="#"><button class="btn">Загрузить AP Helper</button></a>
+				<br />
+				<br />
+				<h1>Установка</h1>
+				<p>1:Скачать сам AP Helper</p>
+				<p>2:Переместить в любое удобное для вас место</p>
+				<p>3:Просто зAPустить :D</p><br /><br />
+				<p>Многие Антивирусы будут распознают скрипт как угрозу, но я вас уверяю что данный скрипт не несёт никакого вредоносного ПО<br/> P.S. Если вы думаете что в данном скритпте присутствует стиллер (чего на самом деле НЕТ), Вы можете поставить полную защиту вашего аккаунта.</p>
+				</div>
+			</div>	
+					<a href="#x" class="overlay" id="win3"></a>
+			<div class="popup">
+				<div class="pop-left">
+				</div>
+				<div class="pop-centr4">
+				</div>
+				<div class="pop-right">
+				<h1>Забито командами</h1>
+				</div>
+			</div>
+			<a href="#x" class="overlay" id="win4"></a>
+			<div class="popup">
+				<div class="pop-left">
+				<h1>Лог обновлений</h1>
+				<div class="pop-left-4">
+				<p>Версия 0.0.0<br /> ХЗ что было</p>
+				<p>Версия 0.0.0<br /> ХЗ что было</p>
+				<p>Версия 0.0.0<br /> ХЗ что было</p>
+				<p>Версия 0.0.0<br /> ХЗ что было</p>
+				<p>Версия 0.0.0<br /> ХЗ что было</p>
+				
+				</div>
+				</div>
+				<div class="pop-centr4">
+				</div>
+				<div class="pop-right">
+				<h1>Самая последния Версия ""</h1>
+				<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /> 
+				<p>Вы можите нAPисать ваше предложение в тех.поддержку :D</p>
+				</div>
+			</div>
+			<a href="#x" class="overlay" id="win5"></a>
+			<div class="popup">
+			    <?php if(isset($_SESSION['logged_user']) ) : ?>
+			     <div class="pop-left51">
+					            <div class="avatar">
+					                <img class="avatar" src="img/skins/<?php echo $_SESSION['logged_user']->id_skins; ?>.png"/>
+					            </div>
+					            <div calss="nick">
+					                <p class="info">Номер вашего аккаунта: <?php echo $_SESSION['logged_user']->id; ?></p>
+					                <p class="info">Ваше имя:   <?php echo $_SESSION['logged_user']->nick; ?></p>
+					                <p class="info">Ваш уровень: <?php echo $_SESSION['logged_user']->lvl; ?></p>
+					                <p class="info">Организация:   <?php echo $_SESSION['logged_user']->org; ?></p>
+					                <p class="info">Ваша должность:  <?php echo $_SESSION['logged_user']->rangname; ?>[<?php echo $_SESSION['logged_user']->rang; ?>]</p>
+					                <p class="info">Подразделение:   <?php echo $_SESSION['logged_user']->city; ?></p>
+					                <p class="info">Ваш пол: <?php echo $_SESSION['logged_user']->sex; ?></p>
+					                <p class="info">Ваш телефон: <?php echo $_SESSION['logged_user']->phone; ?></p>
+					            </div>
+					        </div>
+					        <div class="pop-right51">
+					            
+					        </div>
+							<div><a class="exit" href="exit.php">ВЫЙТИ</a></div>
+			    <?php else : ?>
+				<div class="pop-left">
+					<h1>Авторизация</h1>
+					<form action="/#win5" method="POST">
+					    	<?php 
+						if( ! empty($error) ){
+						    echo '<div style="color: red">'.($error).'</div>';
+						    unset( $_SESSION['logged_user']);
+						}
+						?>
+						<input type="text" name="nick" id="nick" placeholder="Ник" required="required" />
+						<input type="password" name="password" id="password" placeholder="Секретный Пароль" required="required" /><br />
+						<div style="">
+    						<label><?php 
+        						$a = rand(0,10);
+        						$b = rand(0,10);
+        						$c = $a+$b;
+        						echo $a.' <span>+</span> '.$b;
+    						?></label>
+    						<input type="text" name="capch" id="capch" placeholder="<?php echo $c ?>" required="required" style="width: 20%;">
+						</div>
+						<button type="submit" name="do_login" id="do_login" class="btn">Войти :D</button>
+					</form>
+				</div>
+				<div class="pop-centr5">
+				</div>
+				<div class="pop-right">
+					<h2>Личный кабинет</h2>
+					<p>Вы можете там увидеть ....<br /> Удачи :D</p>
+					<h2>Об секретном ключе</h2>
+					<p>Данный ключ генерируется автоматически в AP Helper, Вы можете его найти в AP Helper во вкладке "Ключ"</p>
+				</div>
+				<?php endif; ?>
+			</div>
+			<a href="#x" class="overlay" id="win6"></a>
+			<div class="popup">
+				<div class="pop-left">
+					<h1>Форма связи</h1>
+					<form action="/#win6" method="POST">
+						<input type="text" name="username" placeholder="Ник" required="required" />
+						<input type="text" name="link" placeholder="Ваша ссылку на vk" required="required" />
+						<textarea  type="text" name="text" placeholder="Вопрос" required="required"></textarea>
+						<button type="submit" name="do_send" class="btn" >Отправить сообщение :D</button>
+					</form>
+				</div>
+				<div class="pop-centr6">
+				</div>
+				<div class="pop-right">
+					<h1>Тех.Поддержка</h1>
+					<p>Часто задаваемые вопросы:<br /><br />A: Почему земля круглая?  ||  B: Я так захотел! <br /><br /> A: Почему в скрипте стиллер ?  ||  B: Ну чтоб твой акк стянуть.<br /><br />A: Кто такой Андрей Терещенко?  ||  B: Ты даун ? Это же CZAR - Царь.</p>
+				</div>
+			</div>
+		<footer>
+			<span style="color: #fff;font-size:20px;">© Все права защищенны. 2017 || AP Helper V2.0.<?php echo $contents; ?></span>
+		</footer>
+	</body>
+</html>
